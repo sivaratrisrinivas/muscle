@@ -59,3 +59,7 @@ _Avoid_: Dangerous, irreversible (unless it truly cannot be undone)
 **Tenant**:
 One customer institution.
 _Avoid_: Customer, bank, client (when you mean this)
+
+**Vendor app**:
+The product many tenants run, branded and versioned differently. A capability binds here, not to a tenant.
+_Avoid_: Tenant (when you mean the product), institution
