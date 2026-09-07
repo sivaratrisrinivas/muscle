@@ -43,7 +43,7 @@ Known member `12345` returns success and savings balance `$2,450.00`. Replay doe
 | [#5](https://github.com/sivaratrisrinivas/muscle/issues/5) | Discover the capability |
 | [#6](https://github.com/sivaratrisrinivas/muscle/issues/6) | Ship the demo pack |
 
-Frontier: **#2**. Then #3, #4, and #5 in parallel. Then #6.
+Frontier: **#2** is done. Next: #3, #4, and #5 in parallel. Then #6.
 
 Language is in [`CONTEXT.md`](CONTEXT.md). Locked calls are in [`docs/adr/`](docs/adr/).
 
