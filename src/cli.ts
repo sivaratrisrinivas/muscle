@@ -1,3 +1,4 @@
+import { loadAllowlist } from "./allowlist.ts";
 import { Hands } from "./hands.ts";
 import { MOCK_ORIGIN, startMock } from "./mock/server.ts";
 import type { Capability } from "./types.ts";
@@ -21,8 +22,26 @@ if (command === "mock") {
   if (result.kind === "failure") {
     process.exit(1);
   }
+} else if (command === "discover") {
+  const goal = flag(rest, "--goal");
+  if (!goal) {
+    console.error("Usage: bun run discover --goal \"...\" --param name=value");
+    process.exit(1);
+  }
+  const params = paramsFrom(rest);
+  const allowlist = await loadAllowlist();
+  const origin = allowlist.origins[0];
+  if (!origin) {
+    console.error("Allowlist has no origin");
+    process.exit(1);
+  }
+  const result = await Hands.discover(goal, params, `${origin}/`);
+  console.log(JSON.stringify(result, null, 2));
+  if (result.kind !== "capability") {
+    process.exit(1);
+  }
 } else {
-  console.error("Usage: bun run mock | bun run replay --capability <file> --param name=value [--inject name]");
+  console.error("Usage: bun run mock | bun run discover --goal \"...\" --param name=value | bun run replay --capability <file> --param name=value [--inject name]");
   process.exit(1);
 }
 

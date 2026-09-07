@@ -62,6 +62,49 @@ export type ReplayOptions = {
   waitForResume?: () => Promise<void>;
 };
 
+export type ActCall = {
+  name: "act";
+  action: "click" | "fill" | "read" | "navigate";
+  locators?: LocatorChain;
+  fromParam?: string;
+  into?: string;
+  url?: string;
+};
+
+export type FinishCall = {
+  name: "finish";
+};
+
+export type EscalateCall = {
+  name: "escalate";
+  reason?: string;
+};
+
+export type ToolCall = ActCall | FinishCall | EscalateCall;
+
+export type LlmAdapter = {
+  nextTool(input: { goal: string; params: ReplayParams; snapshot: string }): Promise<ToolCall>;
+};
+
+export type DiscoverOptions = ReplayOptions & {
+  llm?: LlmAdapter;
+  capabilityDir?: string;
+};
+
+export type DiscoverCapability = {
+  kind: "capability";
+  capability: Capability;
+  path: string;
+  transcriptPath: string;
+};
+
+export type DiscoverStopped = {
+  kind: "stopped";
+  reason: "escalate" | "step_cap" | "time_cap" | "identical_snapshots" | "failed_checkpoint";
+};
+
+export type DiscoverResult = DiscoverCapability | DiscoverStopped;
+
 export type ReplaySuccess = {
   kind: "success";
   outputs: Record<string, string>;

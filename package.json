@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "mock": "bun src/cli.ts mock",
+    "discover": "bun src/cli.ts discover",
     "replay": "bun src/cli.ts replay",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
