@@ -88,6 +88,33 @@ test("discover with a scripted LLM writes a capability that replay can run to su
   });
 }, { timeout: 60_000 });
 
+test("discover keeps going when finish is called before the checkpoint holds", async () => {
+  await withMock(async (origin) => {
+    const capabilityDir = await mkdtemp(join(tmpdir(), "hands-cap-"));
+    const result = await Hands.discover(
+      "Look up a member by ID and read the savings balance.",
+      { memberId: "12345" },
+      `${origin}/`,
+      {
+        llm: scripted([
+          { name: "finish" },
+          { name: "act", action: "fill", fromParam: "memberId", locators: memberId },
+          { name: "act", action: "click", locators: search },
+          { name: "act", action: "read", into: "balance", locators: savings },
+          { name: "finish" },
+        ]),
+        capabilityDir,
+      },
+    );
+    expect(result.kind).toBe("capability");
+    if (result.kind !== "capability") {
+      return;
+    }
+    const replayed = await Hands.replay(result.capability, { memberId: "12345" });
+    expect(replayed.kind).toBe("success");
+  });
+}, { timeout: 60_000 });
+
 test("discover stops on escalate and does not write a capability", async () => {
   await withMock(async (origin) => {
     const capabilityDir = await mkdtemp(join(tmpdir(), "hands-cap-"));

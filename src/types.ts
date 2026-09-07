@@ -83,7 +83,12 @@ export type EscalateCall = {
 export type ToolCall = ActCall | FinishCall | EscalateCall;
 
 export type LlmAdapter = {
-  nextTool(input: { goal: string; params: ReplayParams; snapshot: string }): Promise<ToolCall>;
+  nextTool(input: {
+    goal: string;
+    params: ReplayParams;
+    snapshot: string;
+    signal?: AbortSignal;
+  }): Promise<ToolCall>;
 };
 
 export type DiscoverOptions = ReplayOptions & {
@@ -100,10 +105,10 @@ export type DiscoverCapability = {
 
 export type DiscoverStopped = {
   kind: "stopped";
-  reason: "escalate" | "step_cap" | "time_cap" | "identical_snapshots" | "failed_checkpoint";
+  reason: "escalate" | "step_cap" | "time_cap" | "identical_snapshots";
 };
 
-export type DiscoverResult = DiscoverCapability | DiscoverStopped;
+export type DiscoverResult = DiscoverCapability | DiscoverStopped | ReplayFailure;
 
 export type ReplaySuccess = {
   kind: "success";

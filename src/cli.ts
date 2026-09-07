@@ -25,7 +25,7 @@ if (command === "mock") {
 } else if (command === "discover") {
   const goal = flag(rest, "--goal");
   if (!goal) {
-    console.error("Usage: bun run discover --goal \"...\" --param name=value");
+    console.error("Usage: bun run discover --goal \"...\" --param name=value [--target url]");
     process.exit(1);
   }
   const params = paramsFrom(rest);
@@ -35,13 +35,14 @@ if (command === "mock") {
     console.error("Allowlist has no origin");
     process.exit(1);
   }
-  const result = await Hands.discover(goal, params, `${origin}/`);
+  const target = flag(rest, "--target") ?? `${origin}/`;
+  const result = await Hands.discover(goal, params, target);
   console.log(JSON.stringify(result, null, 2));
   if (result.kind !== "capability") {
     process.exit(1);
   }
 } else {
-  console.error("Usage: bun run mock | bun run discover --goal \"...\" --param name=value | bun run replay --capability <file> --param name=value [--inject name]");
+  console.error("Usage: bun run mock | bun run discover --goal \"...\" --param name=value [--target url] | bun run replay --capability <file> --param name=value [--inject name]");
   process.exit(1);
 }
 

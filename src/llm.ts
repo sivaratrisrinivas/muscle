@@ -29,7 +29,7 @@ const TOOLS = [
           url: { type: "string" },
           locators: {
             type: "array",
-            minItems: 1,
+            minItems: 2,
             maxItems: 2,
             items: {
               type: "object",
@@ -82,6 +82,7 @@ export function envLlm(): LlmAdapter {
           "content-type": "application/json",
           authorization: `Bearer ${key}`,
         },
+        signal: input.signal,
         body: JSON.stringify({
           model,
           messages: [
@@ -111,14 +112,14 @@ function parseToolCall(data: unknown): ToolCall {
   };
   const call = payload.choices?.[0]?.message?.tool_calls?.[0]?.function;
   if (!call?.name) {
-    return { name: "escalate", reason: "model did not call a tool" };
+    throw new Error("LLM did not call a tool");
   }
   let args: Record<string, unknown> = {};
   if (call.arguments) {
     try {
       args = JSON.parse(call.arguments) as Record<string, unknown>;
     } catch {
-      return { name: "escalate", reason: "model tool arguments were not JSON" };
+      throw new Error("LLM tool arguments were not JSON");
     }
   }
   if (call.name === "finish") {
@@ -128,11 +129,11 @@ function parseToolCall(data: unknown): ToolCall {
     return { name: "escalate", reason: typeof args.reason === "string" ? args.reason : undefined };
   }
   if (call.name !== "act") {
-    return { name: "escalate", reason: `unknown tool ${call.name}` };
+    throw new Error(`LLM called unknown tool ${call.name}`);
   }
   const action = args.action;
   if (action !== "click" && action !== "fill" && action !== "read" && action !== "navigate") {
-    return { name: "escalate", reason: `unknown act ${String(action)}` };
+    throw new Error(`LLM called unknown act ${String(action)}`);
   }
   return {
     name: "act",
@@ -168,9 +169,6 @@ function asLocators(raw: unknown): LocatorChain | undefined {
   const second = parsed[1];
   if (first && second) {
     return [first as RoleNameLocator, second as VisibleTextLocator];
-  }
-  if (first?.by === "role_name") {
-    return [first, { by: "visible_text", text: first.name }];
   }
   return undefined;
 }

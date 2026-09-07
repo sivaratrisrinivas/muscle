@@ -13,10 +13,12 @@ import type {
   DiscoverOptions,
   DiscoverResult,
   LocatorChain,
+  ReplayFailure,
   ReplayOptions,
   ReplayParams,
   ReplayResult,
   Step,
+  ToolCall,
 } from "./types.ts";
 
 const STEP_CAP = 25;
@@ -58,11 +60,11 @@ export const Hands = {
       const page = await browser.newPage();
       const baseOrigin = allowlist.origins[0];
       if (!baseOrigin) {
-        return { kind: "stopped", reason: "failed_checkpoint" };
+        return fail("start", "an allowlisted origin", "none");
       }
       const targetUrl = new URL(target, `${baseOrigin}/`);
       if (!originAllowed(allowlist, targetUrl)) {
-        throw new Error(`target origin ${targetUrl.origin} is not allowlisted`);
+        return fail("start", `origin ${allowlist.origins.join(" or ")}`, `${targetUrl.origin} (did not navigate)`);
       }
       if (options.inject) {
         await page.context().addCookies([
@@ -77,23 +79,36 @@ export const Hands = {
         return { kind: "stopped", reason: "escalate" };
       }
       if (opened?.kind === "failure") {
-        return { kind: "stopped", reason: "failed_checkpoint" };
+        await snapshotPage(page, evidenceDir, "failure.png");
+        return opened;
       }
       steps.push(open);
 
       const snapshots: string[] = [];
       const outputs: Record<string, string> = {};
       for (let turn = 0; turn < STEP_CAP; turn++) {
-        if (Date.now() - started > TIME_CAP_MS) {
+        const remaining = TIME_CAP_MS - (Date.now() - started);
+        if (remaining <= 0) {
+          await snapshotPage(page, evidenceDir, "failure.png");
           return { kind: "stopped", reason: "time_cap" };
         }
         const snapshot = await a11ySnapshot(page);
         snapshots.push(snapshot);
         if (identicalTail(snapshots, 3)) {
+          await snapshotPage(page, evidenceDir, "failure.png");
           return { kind: "stopped", reason: "identical_snapshots" };
         }
 
-        const tool = await llm.nextTool({ goal, params, snapshot });
+        let tool: ToolCall;
+        try {
+          tool = await llm.nextTool({ goal, params, snapshot, signal: AbortSignal.timeout(remaining) });
+        } catch (error) {
+          if (aborted(error)) {
+            await snapshotPage(page, evidenceDir, "failure.png");
+            return { kind: "stopped", reason: "time_cap" };
+          }
+          throw error;
+        }
         if (tool.name === "escalate") {
           turns.push({ snapshot, tool: "escalate", args: { reason: tool.reason }, result: "escalated" });
           await escalate(page, evidenceDir, {
@@ -108,8 +123,7 @@ export const Hands = {
           const money = await readMoneyNextTo(page, "Savings");
           if (!money) {
             turns.push({ snapshot, tool: "finish", result: "checkpoint failed" });
-            await snapshotPage(page, evidenceDir, "failure.png");
-            return { kind: "stopped", reason: "failed_checkpoint" };
+            continue;
           }
           const capability = compileCapability(goal, params, steps);
           const path = join(capabilityDir, `${capability.name}.v${capability.version}.json`);
@@ -144,6 +158,7 @@ export const Hands = {
         }
         turns.push({ snapshot, tool: "act", args: tool, result: "ok" });
       }
+      await snapshotPage(page, evidenceDir, "failure.png");
       return { kind: "stopped", reason: "step_cap" };
     } finally {
       await browser.close();
@@ -353,7 +368,7 @@ async function businessOutcome(page: Page, businessOutcomes: string[]): Promise<
   return undefined;
 }
 
-function fail(step: string, expected: string, observed: string): ReplayResult {
+function fail(step: string, expected: string, observed: string): ReplayFailure {
   return { kind: "failure", step, expected, observed };
 }
 
@@ -421,10 +436,11 @@ function resolveChain(call: ActCall): LocatorChain | undefined {
   if (first && second) {
     return [first, second];
   }
-  if (first?.by === "role_name") {
-    return [first, { by: "visible_text", text: first.name }];
-  }
   return undefined;
+}
+
+function aborted(error: unknown): boolean {
+  return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
 }
 
 function soleParam(params: ReplayParams): string | undefined {
