@@ -4,6 +4,14 @@ Hands for a Core Connect staff screen with no API. A model discovers get-savings
 
 This is an interface.ai take-home. It is not a bank product.
 
+## Demo
+
+A live headed run. Discover, then replay, then the three injects. Escalation waits for Enter.
+
+<video src="evidence/hands_discover_replay_and_injects_demo.mp4" controls width="100%"></video>
+
+[evidence/hands_discover_replay_and_injects_demo.mp4](evidence/hands_discover_replay_and_injects_demo.mp4)
+
 ## Architecture
 
 One Hands module. The model only sits on discover. Replay reads the capability and never calls it.

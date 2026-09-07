@@ -28,7 +28,7 @@
         {
           "by": "role_name",
           "role": "textbox",
-          "name": ""
+          "name": "Member ID"
         },
         {
           "by": "visible_text",
