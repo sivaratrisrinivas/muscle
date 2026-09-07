@@ -1,0 +1,19 @@
+{
+  "name": "muscle",
+  "module": "src/cli.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "mock": "bun src/cli.ts mock",
+    "replay": "bun src/cli.ts replay",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.1",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "get_savings_balance",
+  "version": 1,
+  "description": "Look up a member by ID and read the savings balance.",
+  "params": [{ "name": "memberId" }],
+  "outputs": [{ "name": "balance" }],
+  "steps": [
+    {
+      "id": "open_lookup",
+      "action": "navigate",
+      "url": "/"
+    },
+    {
+      "id": "fill_member",
+      "action": "fill",
+      "fromParam": "memberId",
+      "locators": [
+        { "by": "role_name", "role": "textbox", "name": "Member ID" },
+        { "by": "visible_text", "text": "Member ID" }
+      ]
+    },
+    {
+      "id": "search",
+      "action": "click",
+      "locators": [
+        { "by": "role_name", "role": "button", "name": "Search" },
+        { "by": "visible_text", "text": "Search" }
+      ]
+    },
+    {
+      "id": "read_savings",
+      "action": "read",
+      "into": "balance",
+      "locators": [
+        { "by": "role_name", "role": "cell", "name": "Savings" },
+        { "by": "visible_text", "text": "Savings" }
+      ]
+    }
+  ],
+  "checkpoint": {
+    "kind": "money_next_to",
+    "label": "Savings"
+  },
+  "businessOutcomes": ["member_not_found"]
+}

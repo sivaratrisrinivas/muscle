@@ -2,7 +2,35 @@
 
 Hands for a hostile credit-union UI: discover a get-savings-balance capability once, then replay it without the model.
 
-This is a hiring work sample, not a bank product. Implementation is not in the tree yet. The spec and tickets live as GitHub issues.
+This is a hiring work sample, not a bank product. The spec and tickets live as GitHub issues.
+
+## Run locally
+
+Needs [Bun](https://bun.sh) and a Playwright Chromium install.
+
+```bash
+bun install
+bunx playwright install chromium
+bun test
+```
+
+In one terminal:
+
+```bash
+bun run mock
+```
+
+The hostile lookup surface is at http://127.0.0.1:47821. Nested tables, no test IDs, an Open sub-account button that does not open a form.
+
+In another:
+
+```bash
+bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345
+```
+
+Known member `12345` returns success and savings balance `$2,450.00`. Replay does not call a model. Off-origin acts are refused.
+
+`#2` is in. Next: `#3`, `#4`, and `#5` in parallel, then `#6`.
 
 ## Issues
 
