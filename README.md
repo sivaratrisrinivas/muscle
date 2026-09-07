@@ -1,50 +1,32 @@
-# Matt Pocock / AI Hero skills
+# Muscle
 
-This repo has [Matt Pocock’s agent skills](https://www.aihero.dev/skills) installed for Cursor.
+Hands for a hostile credit-union UI: discover a get-savings-balance capability once, then replay it without the model.
 
-They live in [`.cursor/skills/`](.cursor/skills/) — Cursor’s project skill folder. In a **local Agent chat** (Editor, not a Cloud Agent follow-up), type `/` to run them. You can also just ask (for example: “grill me about this idea”).
+This is a hiring work sample, not a bank product. Implementation is not in the tree yet. The spec and tickets live as GitHub issues.
 
-Cloud Agent follow-up chats often omit project skills from the `/` menu. That is a Cursor UI limitation, not a missing install. Start a new local Agent chat on this repo, or say the skill name in plain language.
+## Issues
 
-## First thing to run
-
-Once, before the engineering skills write tickets or docs:
-
-```
-/setup-matt-pocock-skills
-```
-
-That asks where issues live (GitHub, GitLab, or local markdown), which triage labels to use, and where domain docs go.
-
-## Main flow (idea → ship)
-
-1. `/grill-with-docs` — interview that also builds `CONTEXT.md` and ADRs
-2. `/to-spec` then `/to-tickets` for work that won’t fit in one session
-3. `/implement` — builds via `/tdd`, then `/code-review`
-
-Not sure which skill? `/ask-matt`.
-
-## Featured skills
-
-| Skill | What it does |
+| Issue | What |
 | --- | --- |
-| `/grill-me` | Relentless interview. Stateless; no repo docs. |
-| `/grill-with-docs` | Same interview, plus glossary and ADRs. |
-| `/domain-modeling` | Sharpen project language in `CONTEXT.md`. |
-| `/tdd` | Red-green-refactor, one slice at a time. |
-| `/triage` | Move incoming issues through triage roles. |
-| `/wayfinder` | Map a multi-session effort as decision tickets. |
-| `/handoff` | Compact this chat for another agent. |
-| `/wait-what` | Re-pitch the last message in plain English. |
-| `/diagnosing-bugs` | Tight feedback loop before theorizing. |
-| `/improve-codebase-architecture` | Find deepening opportunities. |
+| [#1](https://github.com/sivaratrisrinivas/muscle/issues/1) | Spec: Hands / get savings balance |
+| [#2](https://github.com/sivaratrisrinivas/muscle/issues/2) | Replay the happy path (start here) |
+| [#3](https://github.com/sivaratrisrinivas/muscle/issues/3) | Replay not-found and timeout |
+| [#4](https://github.com/sivaratrisrinivas/muscle/issues/4) | Escalate on the live session |
+| [#5](https://github.com/sivaratrisrinivas/muscle/issues/5) | Discover the capability |
+| [#6](https://github.com/sivaratrisrinivas/muscle/issues/6) | Ship the demo pack |
 
-All 37 skills are in `.cursor/skills/`. `npx skills list` still tracks the lockfile.
+Frontier: **#2**. Then #3, #4, and #5 in parallel. Then #6.
 
-## Update
+Language is in [`CONTEXT.md`](CONTEXT.md). Locked calls are in [`docs/adr/`](docs/adr/).
 
-```bash
-npx skills update
-```
+## What will ship
 
-Source: [github.com/mattpocock/skills](https://github.com/mattpocock/skills).
+One Bun process. One Hands seam: `discover` and `replay`. A local mock is the surface. Replay uses a locator chain (role and name, then visible text). Discovery talks to an OpenAI-compatible host (Cerebras by default). Stuck or a risky action pauses on the same headed page until Enter.
+
+Reviewer deliverables land in #6: this README with demo commands, `REPORT.md` (seven required headings), and `evidence/`.
+
+## Agent skills
+
+Matt Pocock / AI Hero skills are in [`.cursor/skills/`](.cursor/skills/). In a local Agent chat, type `/` or name the skill. Cloud Agent follow-ups often hide that menu; say the skill name.
+
+Issue tracking is GitHub on this repo. See `AGENTS.md`.

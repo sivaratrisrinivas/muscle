@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs live on GitHub at `sivaratrisrinivas/muscle`. See `docs/agents/issue-tracker.md`.
+Issues and specs live on GitHub at `sivaratrisrinivas/muscle`. Spec is #1. Tickets are #2–#6. Frontier is #2. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

@@ -2,6 +2,8 @@
 
 Issues and specs for this repo live as GitHub issues on `sivaratrisrinivas/muscle`. Use the `gh` CLI for all operations.
 
+Current map: spec [#1](https://github.com/sivaratrisrinivas/muscle/issues/1). Tickets [#2](https://github.com/sivaratrisrinivas/muscle/issues/2)–[#6](https://github.com/sivaratrisrinivas/muscle/issues/6) are sub-issues of #1. Native `blocked_by` edges are set. A ticket is unblocked when every blocker is closed.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --repo sivaratrisrinivas/muscle --title "..." --body "..."`. Use a heredoc for multi-line bodies.
