@@ -39,7 +39,7 @@ Not sure which skill? `/ask-matt`.
 | `/diagnosing-bugs` | Tight feedback loop before theorizing. |
 | `/improve-codebase-architecture` | Find deepening opportunities. |
 
-All 37 installed skills are listed by `npx skills list`.
+All 37 skills are in `.cursor/skills/`. `npx skills list` still tracks the lockfile.
 
 ## Update
 
