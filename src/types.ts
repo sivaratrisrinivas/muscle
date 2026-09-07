@@ -44,6 +44,8 @@ export type Step = NavigateStep | FillStep | ClickStep | ReadStep;
 export type Capability = {
   name: string;
   version: number;
+  vendorApp: string;
+  vendorVersion: string;
   description: string;
   params: { name: string }[];
   outputs: { name: string }[];

@@ -1,7 +1,7 @@
 export const KNOWN_MEMBER_ID = "12345";
 export const KNOWN_SAVINGS_BALANCE = "$2,450.00";
 
-const chrome = `<!doctype html>
+const staffShell = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -26,7 +26,7 @@ const foot = `
 </html>
 `;
 
-export const lookupPage = `${chrome}
+export const lookupPage = `${staffShell}
 <table class="outer"><tr><td>
 <table class="outer"><tr><td>
 <table class="panel" cellpadding="8"><tr><td>
@@ -46,7 +46,7 @@ export const lookupPage = `${chrome}
 ${foot}`;
 
 export function memberPage(memberId: string, savings: string): string {
-  return `${chrome}
+  return `${staffShell}
 <table class="outer"><tr><td>
 <table class="panel" cellpadding="8"><tr><td>
 <table>
@@ -70,7 +70,7 @@ export function memberPage(memberId: string, savings: string): string {
 ${foot}`;
 }
 
-export const memberNotFoundPage = `${chrome}
+export const memberNotFoundPage = `${staffShell}
 <table class="outer"><tr><td>
 <table class="panel" cellpadding="8"><tr><td>Member not found</td></tr></table>
 </td></tr></table>

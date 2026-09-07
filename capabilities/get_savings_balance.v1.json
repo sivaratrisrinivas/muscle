@@ -1,6 +1,8 @@
 {
   "name": "get_savings_balance",
   "version": 1,
+  "vendorApp": "Core Connect",
+  "vendorVersion": "4.2",
   "description": "Look up a member by ID and read the savings balance.",
   "params": [{ "name": "memberId" }],
   "outputs": [{ "name": "balance" }],
