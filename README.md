@@ -14,7 +14,7 @@ bunx playwright install chromium
 bun test
 ```
 
-`bun run mock` serves http://127.0.0.1:47821. Nested tables, no test IDs. Member `12345` is real. Open sub-account is a button. It does not open a form.
+`bun run mock` serves http://127.0.0.1:47821. Nested tables, no test IDs. Known member is `12345`. Open sub-account is a button. It does not open a form.
 
 ```bash
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345
