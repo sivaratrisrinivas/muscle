@@ -56,6 +56,10 @@ export type Capability = {
 
 export type ReplayParams = Record<string, string>;
 
+export type ReplayOptions = {
+  inject?: string;
+};
+
 export type ReplaySuccess = {
   kind: "success";
   outputs: Record<string, string>;

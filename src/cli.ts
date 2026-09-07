@@ -10,18 +10,19 @@ if (command === "mock") {
 } else if (command === "replay") {
   const capabilityPath = flag(rest, "--capability");
   if (!capabilityPath) {
-    console.error("Usage: bun run replay --capability <file> --param name=value");
+    console.error("Usage: bun run replay --capability <file> --param name=value [--inject name]");
     process.exit(1);
   }
   const params = paramsFrom(rest);
+  const inject = flag(rest, "--inject");
   const capability = (await Bun.file(capabilityPath).json()) as Capability;
-  const result = await Hands.replay(capability, params);
+  const result = await Hands.replay(capability, params, inject ? { inject } : {});
   console.log(JSON.stringify(result, null, 2));
   if (result.kind === "failure") {
     process.exit(1);
   }
 } else {
-  console.error("Usage: bun run mock | bun run replay --capability <file> --param name=value");
+  console.error("Usage: bun run mock | bun run replay --capability <file> --param name=value [--inject name]");
   process.exit(1);
 }
 

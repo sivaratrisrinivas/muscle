@@ -55,3 +55,52 @@ test("an act off the mock origin is refused", async () => {
     }
   });
 }, { timeout: 30_000 });
+
+test("a hard miss names the step, what was expected, and what was observed", async () => {
+  await withMock(async () => {
+    const capability = await loadCapability();
+    const result = await Hands.replay(
+      {
+        ...capability,
+        steps: [
+          { id: "open_lookup", action: "navigate", url: "/" },
+          {
+            id: "ghost",
+            action: "click",
+            locators: [
+              { by: "role_name", role: "button", name: "No such control" },
+              { by: "visible_text", text: "No such control" },
+            ],
+          },
+        ],
+      },
+      { memberId: "12345" },
+    );
+    expect(result.kind).toBe("failure");
+    if (result.kind === "failure") {
+      expect(result.step).toBe("ghost");
+      expect(result.expected).toContain("No such control");
+      expect(result.observed).toContain("Member lookup");
+    }
+  });
+}, { timeout: 30_000 });
+
+test("replay with session-timeout injected dismisses the interstitial and returns success", async () => {
+  await withMock(async () => {
+    const result = await Hands.replay(await loadCapability(), { memberId: "12345" }, { inject: "session_timeout" });
+    expect(result.kind).toBe("success");
+    if (result.kind === "success") {
+      expect(result.outputs.balance).toBe("$2,450.00");
+    }
+  });
+}, { timeout: 30_000 });
+
+test("replay with member-not-found injected returns business_outcome member_not_found", async () => {
+  await withMock(async () => {
+    const result = await Hands.replay(await loadCapability(), { memberId: "12345" }, { inject: "member_not_found" });
+    expect(result.kind).toBe("business_outcome");
+    if (result.kind === "business_outcome") {
+      expect(result.code).toBe("member_not_found");
+    }
+  });
+}, { timeout: 30_000 });

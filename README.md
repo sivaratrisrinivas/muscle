@@ -22,8 +22,15 @@ bun run replay --capability capabilities/get_savings_balance.v1.json --param mem
 
 That prints success and `$2,450.00`. Off-origin acts are refused.
 
+```bash
+bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject member_not_found
+bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject session_timeout
+```
+
+`member_not_found` is a business outcome. `session_timeout` is dismissed and replay can still succeed.
+
 ## Status
 
-Replay of a handwritten capability is in. Still missing: member-not-found and session-timeout, escalation on the same headed page, discover, then REPORT.md and evidence.
+Replay covers the happy path, a missing member, and a recoverable timeout. Still missing: escalation on the same headed page, discover, then REPORT.md and evidence.
 
 Spec: https://github.com/sivaratrisrinivas/muscle/issues/1

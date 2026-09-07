@@ -88,6 +88,23 @@ export async function readMoneyNextTo(page: Page, label: string): Promise<string
   return found ?? undefined;
 }
 
+export async function dismissTimeoutIfPresent(page: Page): Promise<boolean> {
+  const notice = page.getByText("Session timed out", { exact: true });
+  if ((await notice.count()) === 0 || !(await notice.first().isVisible())) {
+    return false;
+  }
+  const found = await locate(page, [
+    { by: "role_name", role: "button", name: "Dismiss" },
+    { by: "visible_text", text: "Dismiss" },
+  ], "click");
+  if ("missed" in found) {
+    return false;
+  }
+  await found.locator.click();
+  await page.waitForLoadState("domcontentloaded");
+  return true;
+}
+
 export async function actTargetUrl(
   locator: PlaywrightLocator,
   currentUrl: string,

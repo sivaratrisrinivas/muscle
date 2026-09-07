@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { actionAllowed, loadAllowlist, originAllowed, resolveActUrl } from "./allowlist.ts";
-import { actTargetUrl, locate, moneyBeside, readMoneyNextTo } from "./surface.ts";
-import type { Allowlist, Capability, ReplayParams, ReplayResult, Step } from "./types.ts";
+import { actTargetUrl, dismissTimeoutIfPresent, locate, moneyBeside, readMoneyNextTo } from "./surface.ts";
+import type { Allowlist, Capability, ReplayOptions, ReplayParams, ReplayResult, Step } from "./types.ts";
 
 export const Hands = {
-  async replay(capability: Capability, params: ReplayParams): Promise<ReplayResult> {
+  async replay(capability: Capability, params: ReplayParams, options: ReplayOptions = {}): Promise<ReplayResult> {
     const allowlist = await loadAllowlist();
     const evidenceDir = process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
     const browser = await chromium.launch({
@@ -22,13 +22,28 @@ export const Hands = {
       if (!baseOrigin) {
         return fail("start", "an allowlisted origin", "none");
       }
+      if (options.inject) {
+        await page.context().addCookies([
+          { name: "inject", value: options.inject, url: `${baseOrigin}/` },
+        ]);
+      }
 
       for (const step of capability.steps) {
-        const failed = await runStep(page, step, params, outputs, allowlist, baseOrigin);
-        if (failed) {
-          await snapshot(page, evidenceDir, "failure.png");
-          return failed;
+        const finished = await runStep(page, step, params, outputs, allowlist, baseOrigin, capability);
+        if (finished) {
+          if (finished.kind === "failure") {
+            await snapshot(page, evidenceDir, "failure.png");
+          } else {
+            await snapshot(page, evidenceDir, "final.png");
+          }
+          return finished;
         }
+      }
+
+      const outcome = await businessOutcome(page, capability);
+      if (outcome) {
+        await snapshot(page, evidenceDir, "final.png");
+        return outcome;
       }
 
       const money = await readMoneyNextTo(page, capability.checkpoint.label);
@@ -61,6 +76,7 @@ async function runStep(
   outputs: Record<string, string>,
   allowlist: Allowlist,
   baseOrigin: string,
+  capability: Capability,
 ): Promise<ReplayResult | undefined> {
   if (!actionAllowed(allowlist, step.action)) {
     return fail(step.id, `an allowlisted action (${allowlist.actions.join(", ")})`, step.action);
@@ -76,8 +92,11 @@ async function runStep(
       );
     }
     await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
-    return undefined;
+    await dismissTimeoutIfPresent(page);
+    return await businessOutcome(page, capability);
   }
+
+  await dismissTimeoutIfPresent(page);
 
   const here = page.url() === "about:blank" ? undefined : new URL(page.url());
   if (here && !originAllowed(allowlist, here)) {
@@ -86,7 +105,7 @@ async function runStep(
 
   const found = await locate(page, step.locators, step.action);
   if ("missed" in found) {
-    return fail(step.id, found.missed, await pageText(page));
+    return (await businessOutcome(page, capability)) ?? fail(step.id, found.missed, await pageText(page));
   }
 
   if (step.action === "fill") {
@@ -109,11 +128,12 @@ async function runStep(
     }
     await found.locator.click();
     await page.waitForLoadState("domcontentloaded");
+    await dismissTimeoutIfPresent(page);
     const after = new URL(page.url());
     if (!originAllowed(allowlist, after)) {
       return fail(step.id, `origin ${allowlist.origins.join(" or ")}`, after.origin);
     }
-    return undefined;
+    return await businessOutcome(page, capability);
   }
 
   const money = await moneyBeside(found.locator);
@@ -121,6 +141,17 @@ async function runStep(
     return fail(step.id, "a money-shaped amount next to the located control", (await found.locator.innerText()).trim());
   }
   outputs[step.into] = money;
+  return undefined;
+}
+
+async function businessOutcome(page: Page, capability: Capability): Promise<ReplayResult | undefined> {
+  if (!capability.businessOutcomes.includes("member_not_found")) {
+    return undefined;
+  }
+  const notice = page.getByText("Member not found", { exact: true });
+  if ((await notice.count()) > 0 && (await notice.first().isVisible())) {
+    return { kind: "business_outcome", code: "member_not_found" };
+  }
   return undefined;
 }
 

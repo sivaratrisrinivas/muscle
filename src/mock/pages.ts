@@ -70,6 +70,26 @@ export function memberPage(memberId: string, savings: string): string {
 ${foot}`;
 }
 
+export function sessionTimeoutPage(memberId: string): string {
+  return `${staffShell}
+<table class="outer"><tr><td>
+<table class="panel" cellpadding="8"><tr><td>
+<table>
+<tr><td>Session timed out</td></tr>
+<tr><td>Your staff session expired. Dismiss to continue the lookup.</td></tr>
+<tr><td>
+<form action="/member" method="get">
+<input type="hidden" name="id" value="${memberId}">
+<input type="hidden" name="resume" value="1">
+<input type="submit" value="Dismiss">
+</form>
+</td></tr>
+</table>
+</td></tr></table>
+</td></tr></table>
+${foot}`;
+}
+
 export const memberNotFoundPage = `${staffShell}
 <table class="outer"><tr><td>
 <table class="panel" cellpadding="8"><tr><td>Member not found</td></tr></table>
