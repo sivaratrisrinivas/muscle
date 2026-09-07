@@ -4,6 +4,38 @@ Hands for a Core Connect staff screen with no API. A model discovers get-savings
 
 This is an interface.ai take-home. It is not a bank product.
 
+## Architecture
+
+One Hands module. The model only sits on discover. Replay reads the capability and never calls it.
+
+```mermaid
+flowchart TB
+  Caller["caller"]
+  Hands["Hands"]
+  LLM["LLM adapter"]
+  Allow["allowlist"]
+  PW["Playwright"]
+  Mock["mock surface"]
+  Cap["capability"]
+  Log["discovery log"]
+  Ev["evidence"]
+  Human["human"]
+
+  Caller -->|"discover: goal, params, URL"| Hands
+  Caller -->|"replay: capability, params"| Hands
+  Hands -->|"discover only"| LLM
+  LLM -->|"act, finish, escalate"| Hands
+  Hands --> Allow
+  Allow -->|"click, fill, read, navigate"| PW
+  PW <--> Mock
+  Hands -->|"writes"| Cap
+  Hands -->|"writes"| Log
+  Cap -->|"replay reads"| Hands
+  Hands --> Ev
+  Hands -->|"stuck or risky"| Human
+  Human -->|"same page, then Enter"| Hands
+```
+
 ## Setup
 
 Bun and Playwright Chromium.
