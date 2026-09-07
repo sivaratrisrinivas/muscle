@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hands } from "../src/hands.ts";
 import { startMock } from "../src/mock/server.ts";
@@ -102,5 +104,74 @@ test("replay with member-not-found injected returns business_outcome member_not_
     if (result.kind === "business_outcome") {
       expect(result.code).toBe("member_not_found");
     }
+  });
+}, { timeout: 30_000 });
+
+test("an unexpected dialog writes an intervention and resumes after Enter", async () => {
+  await withMock(async () => {
+    const evidenceDir = await mkdtemp(join(tmpdir(), "hands-esc-"));
+    const capability = await loadCapability();
+    let sawIntervention = false;
+    const result = await Hands.replay(capability, { memberId: "12345" }, {
+      inject: "unexpected_dialog",
+      evidenceDir,
+      waitForResume: async () => {
+        const intervention = (await Bun.file(join(evidenceDir, "intervention.json")).json()) as {
+          goal: string;
+          step: string;
+          reason: string;
+          screenshot: string;
+        };
+        expect(intervention.goal).toBe(capability.description);
+        expect(intervention.step.length).toBeGreaterThan(0);
+        expect(intervention.reason).toContain("stuck");
+        expect(await Bun.file(join(evidenceDir, intervention.screenshot)).exists()).toBe(true);
+        sawIntervention = true;
+      },
+    });
+    expect(sawIntervention).toBe(true);
+    const owners = (await Bun.file(join(evidenceDir, "owners.json")).json()) as string[];
+    expect(owners).toEqual(["automation", "human", "automation"]);
+    expect(result.kind === "success" || result.kind === "failure").toBe(true);
+  });
+}, { timeout: 30_000 });
+
+test("a step aimed at Open sub-account is a risky action and pauses", async () => {
+  await withMock(async () => {
+    const evidenceDir = await mkdtemp(join(tmpdir(), "hands-risk-"));
+    const capability = await loadCapability();
+    let sawRisky = false;
+    await Hands.replay(
+      {
+        ...capability,
+        steps: [
+          ...capability.steps.slice(0, 3),
+          {
+            id: "open_sub",
+            action: "click",
+            locators: [
+              { by: "role_name", role: "button", name: "Open sub-account" },
+              { by: "visible_text", text: "Open sub-account" },
+            ],
+          },
+        ],
+      },
+      { memberId: "12345" },
+      {
+        evidenceDir,
+        waitForResume: async () => {
+          const intervention = (await Bun.file(join(evidenceDir, "intervention.json")).json()) as {
+            step: string;
+            reason: string;
+          };
+          expect(intervention.step).toBe("open_sub");
+          expect(intervention.reason).toContain("risky");
+          sawRisky = true;
+        },
+      },
+    );
+    expect(sawRisky).toBe(true);
+    const owners = (await Bun.file(join(evidenceDir, "owners.json")).json()) as string[];
+    expect(owners).toEqual(["automation", "human", "automation"]);
   });
 }, { timeout: 30_000 });

@@ -90,6 +90,28 @@ export function sessionTimeoutPage(memberId: string): string {
 ${foot}`;
 }
 
+export function unexpectedDialogPage(memberId: string): string {
+  return `${staffShell}
+<table class="outer"><tr><td>
+<div role="dialog" aria-label="System message">
+<table class="panel" cellpadding="8"><tr><td>
+<table>
+<tr><td>Unexpected system message</td></tr>
+<tr><td>Batch job 4412 failed. Contact operations.</td></tr>
+<tr><td>
+<form action="/member" method="get">
+<input type="hidden" name="id" value="${memberId}">
+<input type="hidden" name="ack" value="1">
+<input type="submit" value="OK">
+</form>
+</td></tr>
+</table>
+</td></tr></table>
+</div>
+</td></tr></table>
+${foot}`;
+}
+
 export const memberNotFoundPage = `${staffShell}
 <table class="outer"><tr><td>
 <table class="panel" cellpadding="8"><tr><td>Member not found</td></tr></table>

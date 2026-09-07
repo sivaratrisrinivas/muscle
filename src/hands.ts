@@ -3,13 +3,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium, type Page } from "playwright";
 import { actionAllowed, loadAllowlist, originAllowed, resolveActUrl } from "./allowlist.ts";
+import { escalate, setOwner, stepAimsAtRisky, unexpectedDialogPresent } from "./escalate.ts";
 import { actTargetUrl, dismissTimeoutIfPresent, locate, moneyBeside, readMoneyNextTo } from "./surface.ts";
 import type { Allowlist, Capability, ReplayOptions, ReplayParams, ReplayResult, Step } from "./types.ts";
 
 export const Hands = {
   async replay(capability: Capability, params: ReplayParams, options: ReplayOptions = {}): Promise<ReplayResult> {
     const allowlist = await loadAllowlist();
-    const evidenceDir = process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
+    const evidenceDir = options.evidenceDir ?? process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
+    const owners: string[] = [];
+    await mkdir(evidenceDir, { recursive: true });
+    await setOwner(owners, evidenceDir, "automation");
     const browser = await chromium.launch({
       headless: process.env.HEADED !== "1",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -29,7 +33,7 @@ export const Hands = {
       }
 
       for (const step of capability.steps) {
-        const finished = await runStep(page, step, params, outputs, allowlist, baseOrigin, capability);
+        const finished = await runStep(page, step, params, outputs, allowlist, baseOrigin, capability, evidenceDir, options.waitForResume, owners);
         if (finished) {
           if (finished.kind === "failure") {
             await snapshot(page, evidenceDir, "failure.png");
@@ -77,6 +81,9 @@ async function runStep(
   allowlist: Allowlist,
   baseOrigin: string,
   capability: Capability,
+  evidenceDir: string,
+  waitForResume: ReplayOptions["waitForResume"],
+  owners: string[],
 ): Promise<ReplayResult | undefined> {
   if (!actionAllowed(allowlist, step.action)) {
     return fail(step.id, `an allowlisted action (${allowlist.actions.join(", ")})`, step.action);
@@ -93,10 +100,18 @@ async function runStep(
     }
     await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
     await dismissTimeoutIfPresent(page);
+    const stuckAfterGo = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+    if (stuckAfterGo) {
+      return stuckAfterGo;
+    }
     return await businessOutcome(page, capability);
   }
 
   await dismissTimeoutIfPresent(page);
+  const stuck = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+  if (stuck) {
+    return stuck;
+  }
 
   const here = page.url() === "about:blank" ? undefined : new URL(page.url());
   if (here && !originAllowed(allowlist, here)) {
@@ -118,6 +133,15 @@ async function runStep(
   }
 
   if (step.action === "click") {
+    if (stepAimsAtRisky(step)) {
+      await escalate(page, evidenceDir, {
+        goal: capability.description,
+        step: step.id,
+        reason: "risky: Open sub-account",
+        screenshot: "intervention.png",
+      }, owners, waitForResume);
+      return undefined;
+    }
     const leaving = await actTargetUrl(found.locator, page.url());
     if (leaving && !originAllowed(allowlist, leaving)) {
       return fail(
@@ -129,6 +153,10 @@ async function runStep(
     await found.locator.click();
     await page.waitForLoadState("domcontentloaded");
     await dismissTimeoutIfPresent(page);
+    const stuckAfterClick = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+    if (stuckAfterClick) {
+      return stuckAfterClick;
+    }
     const after = new URL(page.url());
     if (!originAllowed(allowlist, after)) {
       return fail(step.id, `origin ${allowlist.origins.join(" or ")}`, after.origin);
@@ -141,6 +169,29 @@ async function runStep(
     return fail(step.id, "a money-shaped amount next to the located control", (await found.locator.innerText()).trim());
   }
   outputs[step.into] = money;
+  return undefined;
+}
+
+async function handleStuck(
+  page: Page,
+  step: Step,
+  capability: Capability,
+  evidenceDir: string,
+  waitForResume: ReplayOptions["waitForResume"],
+  owners: string[],
+): Promise<ReplayResult | undefined> {
+  if (!(await unexpectedDialogPresent(page))) {
+    return undefined;
+  }
+  await escalate(page, evidenceDir, {
+    goal: capability.description,
+    step: step.id,
+    reason: "stuck: unexpected dialog",
+    screenshot: "intervention.png",
+  }, owners, waitForResume);
+  if (await unexpectedDialogPresent(page)) {
+    return fail(step.id, "the unexpected dialog cleared after resume", await pageText(page));
+  }
   return undefined;
 }
 

@@ -58,6 +58,8 @@ export type ReplayParams = Record<string, string>;
 
 export type ReplayOptions = {
   inject?: string;
+  evidenceDir?: string;
+  waitForResume?: () => Promise<void>;
 };
 
 export type ReplaySuccess = {
