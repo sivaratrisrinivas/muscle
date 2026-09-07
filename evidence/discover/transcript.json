@@ -1,0 +1,72 @@
+{
+  "goal": "Look up a member by ID and read the savings balance.",
+  "turns": [
+    {
+      "snapshot": "- text: Harbor Credit Union Core Connect 4.2 — staff only\n- table:\n  - rowgroup:\n    - row \"Member lookup Member ID Search\":\n      - cell \"Member lookup Member ID Search\":\n        - table:\n          - rowgroup:\n            - row \"Member lookup Member ID Search\":\n              - cell \"Member lookup Member ID Search\":\n                - table:\n                  - rowgroup:\n                    - row \"Member lookup Member ID Search\":\n                      - cell \"Member lookup Member ID Search\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member lookup\":\n                              - cell \"Member lookup\"\n                            - row \"Member ID Search\":\n                              - cell \"Member ID Search\":\n                                - table:\n                                  - rowgroup:\n                                    - row \"Member ID\":\n                                      - cell \"Member ID\"\n                                      - cell:\n                                        - textbox\n                                    - row \"Search\":\n                                      - cell\n                                      - cell \"Search\":\n                                        - button \"Search\"",
+      "tool": "act",
+      "args": {
+        "name": "act",
+        "action": "fill",
+        "locators": [
+          {
+            "by": "role_name",
+            "role": "textbox",
+            "name": ""
+          },
+          {
+            "by": "visible_text",
+            "text": "Member ID"
+          }
+        ],
+        "fromParam": "memberId"
+      },
+      "result": "ok"
+    },
+    {
+      "snapshot": "- text: Harbor Credit Union Core Connect 4.2 — staff only\n- table:\n  - rowgroup:\n    - row \"Member lookup Member ID 12345 Search\":\n      - cell \"Member lookup Member ID 12345 Search\":\n        - table:\n          - rowgroup:\n            - row \"Member lookup Member ID 12345 Search\":\n              - cell \"Member lookup Member ID 12345 Search\":\n                - table:\n                  - rowgroup:\n                    - row \"Member lookup Member ID 12345 Search\":\n                      - cell \"Member lookup Member ID 12345 Search\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member lookup\":\n                              - cell \"Member lookup\"\n                            - row \"Member ID 12345 Search\":\n                              - cell \"Member ID 12345 Search\":\n                                - table:\n                                  - rowgroup:\n                                    - row \"Member ID 12345\":\n                                      - cell \"Member ID\"\n                                      - cell \"12345\":\n                                        - textbox: \"12345\"\n                                    - row \"Search\":\n                                      - cell\n                                      - cell \"Search\":\n                                        - button \"Search\"",
+      "tool": "act",
+      "args": {
+        "name": "act",
+        "action": "click",
+        "locators": [
+          {
+            "by": "role_name",
+            "role": "button",
+            "name": "Search"
+          },
+          {
+            "by": "visible_text",
+            "text": "Search"
+          }
+        ]
+      },
+      "result": "ok"
+    },
+    {
+      "snapshot": "- text: Harbor Credit Union Core Connect 4.2 — staff only\n- table:\n  - rowgroup:\n    - row \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n      - cell \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n        - table:\n          - rowgroup:\n            - row \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n              - cell \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n                - table:\n                  - rowgroup:\n                    - row \"Member record\":\n                      - cell \"Member record\"\n                    - row \"Member 12345 Type Available Savings $2,450.00 Checking $318.42\":\n                      - cell \"Member 12345 Type Available Savings $2,450.00 Checking $318.42\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member 12345\":\n                              - cell \"Member\"\n                              - cell \"12345\"\n                            - row \"Type Available Savings $2,450.00 Checking $318.42\":\n                              - cell \"Type Available Savings $2,450.00 Checking $318.42\":\n                                - table:\n                                  - rowgroup:\n                                    - row \"Type Available\":\n                                      - cell \"Type\"\n                                      - cell \"Available\"\n                                    - row \"Savings $2,450.00\":\n                                      - cell \"Savings\"\n                                      - cell \"$2,450.00\"\n                                    - row \"Checking $318.42\":\n                                      - cell \"Checking\"\n                                      - cell \"$318.42\"\n                    - row \"Open sub-account\":\n                      - cell \"Open sub-account\":\n                        - button \"Open sub-account\"",
+      "tool": "act",
+      "args": {
+        "name": "act",
+        "action": "read",
+        "locators": [
+          {
+            "by": "role_name",
+            "role": "cell",
+            "name": "Savings"
+          },
+          {
+            "by": "visible_text",
+            "text": "$2,450.00"
+          }
+        ],
+        "into": "balance"
+      },
+      "result": "ok"
+    },
+    {
+      "snapshot": "- text: Harbor Credit Union Core Connect 4.2 — staff only\n- table:\n  - rowgroup:\n    - row \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n      - cell \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n        - table:\n          - rowgroup:\n            - row \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n              - cell \"Member record Member 12345 Type Available Savings $2,450.00 Checking $318.42 Open sub-account\":\n                - table:\n                  - rowgroup:\n                    - row \"Member record\":\n                      - cell \"Member record\"\n                    - row \"Member 12345 Type Available Savings $2,450.00 Checking $318.42\":\n                      - cell \"Member 12345 Type Available Savings $2,450.00 Checking $318.42\":\n                        - table:\n                          - rowgroup:\n                            - row \"Member 12345\":\n                              - cell \"Member\"\n                              - cell \"12345\"\n                            - row \"Type Available Savings $2,450.00 Checking $318.42\":\n                              - cell \"Type Available Savings $2,450.00 Checking $318.42\":\n                                - table:\n                                  - rowgroup:\n                                    - row \"Type Available\":\n                                      - cell \"Type\"\n                                      - cell \"Available\"\n                                    - row \"Savings $2,450.00\":\n                                      - cell \"Savings\"\n                                      - cell \"$2,450.00\"\n                                    - row \"Checking $318.42\":\n                                      - cell \"Checking\"\n                                      - cell \"$318.42\"\n                    - row \"Open sub-account\":\n                      - cell \"Open sub-account\":\n                        - button \"Open sub-account\"",
+      "tool": "finish",
+      "result": "$2,450.00"
+    }
+  ]
+}

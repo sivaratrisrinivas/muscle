@@ -47,4 +47,4 @@ bun run replay --capability capabilities/get_savings_balance.v1.json --param mem
 
 `HEADED=1` shows the window.
 
-I still owe `REPORT.md` and committed evidence. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1
+Committed runs live in `evidence/`. The write-up is `REPORT.md`. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1

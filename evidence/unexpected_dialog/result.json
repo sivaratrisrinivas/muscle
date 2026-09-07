@@ -1,0 +1,6 @@
+{
+  "kind": "failure",
+  "step": "read_balance",
+  "expected": "role cell named Savings, then visible text $2,450.00",
+  "observed": "Harbor Credit Union Core Connect 4.2 — staff only\nUnexpected system message\nBatch job 4412 failed. Contact operations.\n"
+}

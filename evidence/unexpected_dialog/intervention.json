@@ -1,0 +1,6 @@
+{
+  "goal": "Look up a member by ID and read the savings balance.",
+  "step": "search",
+  "reason": "stuck: unexpected dialog",
+  "screenshot": "intervention.png"
+}
