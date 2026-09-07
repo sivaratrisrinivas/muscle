@@ -6,11 +6,11 @@ This is an interface.ai take-home. It is not a bank product.
 
 ## Demo
 
-A live headed run. Discover, then replay, then the three injects. Escalation waits for Enter.
+A live headed run. Happy replay, not-found, timeout, then the unexpected dialog. I click OK, press Enter, and it finishes with `$2,450.00`.
 
-<video src="evidence/hands_discover_replay_and_injects_demo.mp4" controls width="100%"></video>
+<video src="evidence/hands_full_spine_ok_click_success.mp4" controls width="100%"></video>
 
-[evidence/hands_discover_replay_and_injects_demo.mp4](evidence/hands_discover_replay_and_injects_demo.mp4)
+[evidence/hands_full_spine_ok_click_success.mp4](evidence/hands_full_spine_ok_click_success.mp4)
 
 ## Architecture
 
