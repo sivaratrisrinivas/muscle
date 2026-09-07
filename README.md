@@ -14,7 +14,7 @@ bunx playwright install chromium
 bun test
 ```
 
-Discovery needs `LLM_API_KEY`. Put it in `.env` at the repo root. Git ignores that file. `LLM_BASE_URL` and `MODEL` default to Cerebras at `https://api.cerebras.ai/v1` and `gpt-oss-120b`.
+Discovery needs `LLM_API_KEY` in `.env` at the repo root. Git ignores that file. `LLM_BASE_URL` and `MODEL` default to Cerebras, `https://api.cerebras.ai/v1` and `gpt-oss-120b`.
 
 ## Mock
 
@@ -27,7 +27,7 @@ bun run mock
 bun run discover --goal "Look up a member by ID and read the savings balance." --param memberId=12345
 ```
 
-The model only decides. Playwright acts. A successful run writes `capabilities/get_savings_balance.v1.json`. The chat sits in `capabilities/get_savings_balance.v1.transcript.json`. The capability keeps param names, not the live member ID.
+The model only decides. Playwright acts. A successful run writes `capabilities/get_savings_balance.v1.json`. Param names stay. The live member ID does not. The discovery log is `capabilities/get_savings_balance.v1.transcript.json`.
 
 ## Replay
 
@@ -35,7 +35,7 @@ The model only decides. Playwright acts. A successful run writes `capabilities/g
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345
 ```
 
-That prints success and `$2,450.00`. Off-origin acts are refused.
+Prints success and `$2,450.00`. Off-origin acts are refused.
 
 ```bash
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject member_not_found
@@ -43,8 +43,8 @@ bun run replay --capability capabilities/get_savings_balance.v1.json --param mem
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject unexpected_dialog
 ```
 
-`member_not_found` returns business outcome `member_not_found`. `session_timeout` is a recoverable condition, dismissed inside the step. `unexpected_dialog` is stuck. Stuck writes `intervention.json` and waits for Enter on the same page. A step aimed at Open sub-account is risky and pauses the same way. Human clicks do not become capability steps.
+`member_not_found` is a business outcome. `session_timeout` is a recoverable condition, dismissed inside the step. `unexpected_dialog` is stuck. Stuck writes `intervention.json` and waits for Enter on the same page. A step aimed at Open sub-account is risky and pauses the same way. Human clicks do not become capability steps.
 
 `HEADED=1` shows the window.
 
-Committed runs live in `evidence/`. The write-up is `REPORT.md`. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1
+I left the runs in `evidence/`. The timeout folder still has the interstitial. The unexpected dialog has the intervention. `REPORT.md` is the write-up. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1
