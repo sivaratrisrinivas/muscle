@@ -18,30 +18,15 @@ bun test
 
 ```bash
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345
+bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject <name>
 ```
 
-That prints success and `$2,450.00`. Off-origin acts are refused.
+Happy path prints success and `$2,450.00`. Off-origin acts are refused.
 
-A missing member is a business outcome, not a crash.
-
-```bash
-bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject member_not_found
-```
-
-A session-timeout interstitial is a recoverable condition. Dismiss it and the same replay can still succeed.
-
-```bash
-bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject session_timeout
-```
-
-An unexpected dialog is stuck. Replay writes `intervention.json`, flips owner to human, and waits for Enter on the same page. Open sub-account is a risky action and pauses the same way. Human clicks do not become capability steps.
-
-```bash
-HEADED=1 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject unexpected_dialog
-```
+`--inject` names are `member_not_found` (business outcome), `session_timeout` (recoverable condition, dismissed inside the step), and `unexpected_dialog` (stuck). Stuck writes `intervention.json` and waits for Enter on the same page. A step aimed at Open sub-account is risky and pauses the same way. Human clicks do not become capability steps. Use `HEADED=1` if you want to see the window.
 
 ## Status
 
-I have replay, including escalation. I do not have discover, REPORT.md, or evidence.
+I have replay. I do not have discover, REPORT.md, or evidence.
 
 Spec: https://github.com/sivaratrisrinivas/muscle/issues/1
