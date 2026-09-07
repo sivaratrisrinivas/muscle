@@ -12,6 +12,7 @@ export const Hands = {
     const allowlist = await loadAllowlist();
     const evidenceDir = options.evidenceDir ?? process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
     const owners: string[] = [];
+    const handoff = { stuck: false };
     await mkdir(evidenceDir, { recursive: true });
     await setOwner(owners, evidenceDir, "automation");
     const browser = await chromium.launch({
@@ -33,7 +34,7 @@ export const Hands = {
       }
 
       for (const step of capability.steps) {
-        const finished = await runStep(page, step, params, outputs, allowlist, baseOrigin, capability, evidenceDir, options.waitForResume, owners);
+        const finished = await runStep(page, step, params, outputs, allowlist, baseOrigin, capability, evidenceDir, options.waitForResume, owners, handoff);
         if (finished) {
           if (finished.kind === "failure") {
             await snapshot(page, evidenceDir, "failure.png");
@@ -84,6 +85,7 @@ async function runStep(
   evidenceDir: string,
   waitForResume: ReplayOptions["waitForResume"],
   owners: string[],
+  handoff: { stuck: boolean },
 ): Promise<ReplayResult | undefined> {
   if (!actionAllowed(allowlist, step.action)) {
     return fail(step.id, `an allowlisted action (${allowlist.actions.join(", ")})`, step.action);
@@ -100,7 +102,7 @@ async function runStep(
     }
     await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
     await dismissTimeoutIfPresent(page);
-    const stuckAfterGo = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+    const stuckAfterGo = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners, handoff);
     if (stuckAfterGo) {
       return stuckAfterGo;
     }
@@ -108,7 +110,7 @@ async function runStep(
   }
 
   await dismissTimeoutIfPresent(page);
-  const stuck = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+  const stuck = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners, handoff);
   if (stuck) {
     return stuck;
   }
@@ -116,6 +118,16 @@ async function runStep(
   const here = page.url() === "about:blank" ? undefined : new URL(page.url());
   if (here && !originAllowed(allowlist, here)) {
     return fail(step.id, `origin ${allowlist.origins.join(" or ")}`, here.origin);
+  }
+
+  if (stepAimsAtRisky(step)) {
+    await escalate(page, evidenceDir, {
+      goal: capability.description,
+      step: step.id,
+      reason: "risky: Open sub-account",
+      screenshot: "intervention.png",
+    }, owners, waitForResume);
+    return undefined;
   }
 
   const found = await locate(page, step.locators, step.action);
@@ -133,15 +145,6 @@ async function runStep(
   }
 
   if (step.action === "click") {
-    if (stepAimsAtRisky(step)) {
-      await escalate(page, evidenceDir, {
-        goal: capability.description,
-        step: step.id,
-        reason: "risky: Open sub-account",
-        screenshot: "intervention.png",
-      }, owners, waitForResume);
-      return undefined;
-    }
     const leaving = await actTargetUrl(found.locator, page.url());
     if (leaving && !originAllowed(allowlist, leaving)) {
       return fail(
@@ -153,7 +156,7 @@ async function runStep(
     await found.locator.click();
     await page.waitForLoadState("domcontentloaded");
     await dismissTimeoutIfPresent(page);
-    const stuckAfterClick = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners);
+    const stuckAfterClick = await handleStuck(page, step, capability, evidenceDir, waitForResume, owners, handoff);
     if (stuckAfterClick) {
       return stuckAfterClick;
     }
@@ -179,19 +182,18 @@ async function handleStuck(
   evidenceDir: string,
   waitForResume: ReplayOptions["waitForResume"],
   owners: string[],
+  handoff: { stuck: boolean },
 ): Promise<ReplayResult | undefined> {
-  if (!(await unexpectedDialogPresent(page))) {
+  if (!(await unexpectedDialogPresent(page)) || handoff.stuck) {
     return undefined;
   }
+  handoff.stuck = true;
   await escalate(page, evidenceDir, {
     goal: capability.description,
     step: step.id,
     reason: "stuck: unexpected dialog",
     screenshot: "intervention.png",
   }, owners, waitForResume);
-  if (await unexpectedDialogPresent(page)) {
-    return fail(step.id, "the unexpected dialog cleared after resume", await pageText(page));
-  }
   return undefined;
 }
 

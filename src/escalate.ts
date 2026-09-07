@@ -41,6 +41,9 @@ export async function escalate(
 
 export async function setOwner(owners: string[], evidenceDir: string, owner: "automation" | "human") {
   owners.push(owner);
+  if (owner === "human" || owners.includes("human")) {
+    console.log(`owner ${owner}`);
+  }
   await Bun.write(join(evidenceDir, "owners.json"), JSON.stringify(owners, null, 2));
 }
 
