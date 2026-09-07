@@ -31,6 +31,6 @@ bun run replay --capability capabilities/get_savings_balance.v1.json --param mem
 
 ## Status
 
-Replay covers the happy path, a missing member, and a recoverable timeout. Still missing: escalation on the same headed page, discover, then REPORT.md and evidence.
+Replay covers the happy path, a missing member, and a recoverable condition. Still missing: escalation on the same headed page, discover, then REPORT.md and evidence.
 
 Spec: https://github.com/sivaratrisrinivas/muscle/issues/1
