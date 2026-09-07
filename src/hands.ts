@@ -94,10 +94,6 @@ export const Hands = {
         }
         const snapshot = await a11ySnapshot(page);
         snapshots.push(snapshot);
-        if (identicalTail(snapshots, 3)) {
-          await snapshotPage(page, evidenceDir, "failure.png");
-          return { kind: "stopped", reason: "identical_snapshots" };
-        }
 
         let tool: ToolCall;
         try {
@@ -121,42 +117,43 @@ export const Hands = {
         }
         if (tool.name === "finish") {
           const money = await readMoneyNextTo(page, "Savings");
-          if (!money) {
-            turns.push({ snapshot, tool: "finish", result: "checkpoint failed" });
-            continue;
+          if (money) {
+            const capability = compileCapability(goal, params, steps);
+            const path = join(capabilityDir, `${capability.name}.v${capability.version}.json`);
+            const transcriptPath = join(capabilityDir, `${capability.name}.v${capability.version}.transcript.json`);
+            turns.push({ snapshot, tool: "finish", result: money });
+            await Bun.write(path, `${JSON.stringify(capability, null, 2)}\n`);
+            await Bun.write(transcriptPath, `${JSON.stringify({ goal, turns }, null, 2)}\n`);
+            await snapshotPage(page, evidenceDir, "final.png");
+            return { kind: "capability", capability, path, transcriptPath };
           }
-          const capability = compileCapability(goal, params, steps);
-          const path = join(capabilityDir, `${capability.name}.v${capability.version}.json`);
-          const transcriptPath = join(capabilityDir, `${capability.name}.v${capability.version}.transcript.json`);
-          turns.push({ snapshot, tool: "finish", result: money });
-          await Bun.write(path, `${JSON.stringify(capability, null, 2)}\n`);
-          await Bun.write(transcriptPath, `${JSON.stringify({ goal, turns }, null, 2)}\n`);
-          await snapshotPage(page, evidenceDir, "final.png");
-          return { kind: "capability", capability, path, transcriptPath };
+          turns.push({ snapshot, tool: "finish", result: "checkpoint failed" });
+        } else {
+          const compiled = compileAct(tool, params, steps.length);
+          if ("error" in compiled) {
+            turns.push({ snapshot, tool: "act", args: tool, result: compiled.error });
+          } else {
+            const finished = await runStep(page, compiled, params, outputs, allowlist, baseOrigin, goal, outcomes, evidenceDir, options.waitForResume, owners, handoff);
+            if (handoff.escalated) {
+              turns.push({ snapshot, tool: "act", args: tool, result: "escalated" });
+              return { kind: "stopped", reason: "escalate" };
+            }
+            if (finished?.kind === "failure") {
+              turns.push({ snapshot, tool: "act", args: tool, result: `${finished.expected} / ${finished.observed}` });
+            } else if (finished?.kind === "business_outcome") {
+              turns.push({ snapshot, tool: "act", args: tool, result: finished.code });
+            } else {
+              if (!duplicateNavigate(steps, compiled)) {
+                steps.push(compiled);
+              }
+              turns.push({ snapshot, tool: "act", args: tool, result: "ok" });
+            }
+          }
         }
-
-        const compiled = compileAct(tool, params, steps.length);
-        if ("error" in compiled) {
-          turns.push({ snapshot, tool: "act", args: tool, result: compiled.error });
-          continue;
+        if (identicalTail(snapshots, 3)) {
+          await snapshotPage(page, evidenceDir, "failure.png");
+          return { kind: "stopped", reason: "identical_snapshots" };
         }
-        const finished = await runStep(page, compiled, params, outputs, allowlist, baseOrigin, goal, outcomes, evidenceDir, options.waitForResume, owners, handoff);
-        if (handoff.escalated) {
-          turns.push({ snapshot, tool: "act", args: tool, result: "escalated" });
-          return { kind: "stopped", reason: "escalate" };
-        }
-        if (finished?.kind === "failure") {
-          turns.push({ snapshot, tool: "act", args: tool, result: `${finished.expected} / ${finished.observed}` });
-          continue;
-        }
-        if (finished?.kind === "business_outcome") {
-          turns.push({ snapshot, tool: "act", args: tool, result: finished.code });
-          continue;
-        }
-        if (!duplicateNavigate(steps, compiled)) {
-          steps.push(compiled);
-        }
-        turns.push({ snapshot, tool: "act", args: tool, result: "ok" });
       }
       await snapshotPage(page, evidenceDir, "failure.png");
       return { kind: "stopped", reason: "step_cap" };

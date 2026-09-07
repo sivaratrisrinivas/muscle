@@ -4,8 +4,16 @@
   "vendorApp": "Core Connect",
   "vendorVersion": "4.2",
   "description": "Look up a member by ID and read the savings balance.",
-  "params": [{ "name": "memberId" }],
-  "outputs": [{ "name": "balance" }],
+  "params": [
+    {
+      "name": "memberId"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "balance"
+    }
+  ],
   "steps": [
     {
       "id": "open_lookup",
@@ -13,29 +21,50 @@
       "url": "/"
     },
     {
-      "id": "fill_member",
+      "id": "fill_memberId",
       "action": "fill",
       "fromParam": "memberId",
       "locators": [
-        { "by": "role_name", "role": "textbox", "name": "Member ID" },
-        { "by": "visible_text", "text": "Member ID" }
+        {
+          "by": "role_name",
+          "role": "textbox",
+          "name": ""
+        },
+        {
+          "by": "visible_text",
+          "text": "Member ID"
+        }
       ]
     },
     {
       "id": "search",
       "action": "click",
       "locators": [
-        { "by": "role_name", "role": "button", "name": "Search" },
-        { "by": "visible_text", "text": "Search" }
+        {
+          "by": "role_name",
+          "role": "button",
+          "name": "Search"
+        },
+        {
+          "by": "visible_text",
+          "text": "Search"
+        }
       ]
     },
     {
-      "id": "read_savings",
+      "id": "read_balance",
       "action": "read",
       "into": "balance",
       "locators": [
-        { "by": "role_name", "role": "cell", "name": "Savings" },
-        { "by": "visible_text", "text": "Savings" }
+        {
+          "by": "role_name",
+          "role": "cell",
+          "name": "Savings"
+        },
+        {
+          "by": "visible_text",
+          "text": "$2,450.00"
+        }
       ]
     }
   ],
@@ -43,5 +72,7 @@
     "kind": "money_next_to",
     "label": "Savings"
   },
-  "businessOutcomes": ["member_not_found"]
+  "businessOutcomes": [
+    "member_not_found"
+  ]
 }
