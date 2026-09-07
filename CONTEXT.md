@@ -40,6 +40,22 @@ _Avoid_: Guardrail (broader), denylist
 How a step names the control it will act on.
 _Avoid_: Selector (when you mean the strategy), test ID
 
+**Locator chain**:
+Ordered attempts to find a control: role and name, then visible text, then structure. Replay walks the chain. It does not aim by pixels.
+_Avoid_: CSS path, coordinates, single xpath
+
+**Recoverable condition**:
+A mid-run state we handle and then continue, such as a known timeout interstitial. Not a terminal result.
+_Avoid_: Soft failure, business outcome (when you mean this)
+
+**Stuck**:
+The run cannot take the next step safely. An escalation reason.
+_Avoid_: Error, failed (when you mean this)
+
+**Risky action**:
+An action that can proceed but needs a person first. On this mock, submitting open-sub-account.
+_Avoid_: Dangerous, irreversible (unless it truly cannot be undone)
+
 **Tenant**:
 One customer institution.
 _Avoid_: Customer, bank, client (when you mean this)
