@@ -2,7 +2,9 @@
 
 This repo has [Matt Pocock’s agent skills](https://www.aihero.dev/skills) installed for Cursor.
 
-They live in [`.agents/skills/`](.agents/skills/) — a path Cursor discovers automatically. Type `/` in Agent chat to run them, or just ask (for example: “grill me about this idea”).
+They live in [`.cursor/skills/`](.cursor/skills/) — Cursor’s project skill folder. In a **local Agent chat** (Editor, not a Cloud Agent follow-up), type `/` to run them. You can also just ask (for example: “grill me about this idea”).
+
+Cloud Agent follow-up chats often omit project skills from the `/` menu. That is a Cursor UI limitation, not a missing install. Start a new local Agent chat on this repo, or say the skill name in plain language.
 
 ## First thing to run
 
