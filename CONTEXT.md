@@ -41,8 +41,8 @@ How a step names the control it will act on.
 _Avoid_: Selector (when you mean the strategy), test ID
 
 **Locator chain**:
-Ordered attempts to find a control: role and name, then visible text, then structure. Replay walks the chain. It does not aim by pixels.
-_Avoid_: CSS path, coordinates, single xpath
+Two attempts to find a control: role and name, then visible text. If both miss, the step fails. Replay does not aim by pixels or by table index.
+_Avoid_: CSS path, coordinates, xpath, structural nth-cell
 
 **Recoverable condition**:
 A mid-run state we handle and then continue, such as a known timeout interstitial. Not a terminal result.
@@ -53,7 +53,7 @@ The run cannot take the next step safely. An escalation reason.
 _Avoid_: Error, failed (when you mean this)
 
 **Risky action**:
-An action that can proceed but needs a person first. On this mock, submitting open-sub-account.
+A named control we will not take automatically. On this mock, the Open sub-account button. There is no second capability behind it.
 _Avoid_: Dangerous, irreversible (unless it truly cannot be undone)
 
 **Tenant**:
