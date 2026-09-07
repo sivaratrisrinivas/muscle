@@ -1,0 +1,12 @@
+[
+  {
+    "type": "click",
+    "role": "button",
+    "name": "OK",
+    "atMs": 34
+  },
+  {
+    "type": "resume",
+    "atMs": 49
+  }
+]

@@ -21,6 +21,11 @@ const savings: LocatorChain = [
   { by: "visible_text", text: "Savings" },
 ];
 
+const savingsAmount: LocatorChain = [
+  { by: "role_name", role: "cell", name: "Savings" },
+  { by: "visible_text", text: "$2,450.00" },
+];
+
 function scripted(calls: ToolCall[]): LlmAdapter {
   let i = 0;
   return {
@@ -58,7 +63,7 @@ test("discover with a scripted LLM writes a capability that replay can run to su
         llm: scripted([
           { name: "act", action: "fill", fromParam: "memberId", locators: memberId },
           { name: "act", action: "click", locators: search },
-          { name: "act", action: "read", into: "balance", locators: savings },
+          { name: "act", action: "read", into: "balance", locators: savingsAmount },
           { name: "finish" },
         ]),
         capabilityDir,
@@ -72,9 +77,12 @@ test("discover with a scripted LLM writes a capability that replay can run to su
 
     const raw = await Bun.file(result.path).text();
     expect(raw).not.toContain("12345");
+    expect(raw).not.toContain("$2,450.00");
     expect(raw.includes("transcript") || raw.includes("messages")).toBe(false);
 
     const written = (await Bun.file(result.path).json()) as Capability;
+    const read = written.steps.find((step) => step.action === "read");
+    expect(read && "locators" in read ? read.locators[1].text : undefined).toBe("Savings");
     expect(written.params).toEqual([{ name: "memberId" }]);
     expect(written.outputs).toEqual([{ name: "balance" }]);
     expect(await Bun.file(result.transcriptPath).exists()).toBe(true);
@@ -145,6 +153,73 @@ test("discover stops on escalate and does not write a capability", async () => {
     expect(await Bun.file(join(capabilityDir, "get_savings_balance.v1.json")).exists()).toBe(false);
   });
 }, { timeout: 30_000 });
+
+test("discover fails the blocked step when the stuck dialog is still there after resume", async () => {
+  await withMock(async (origin) => {
+    const capabilityDir = await mkdtemp(join(tmpdir(), "hands-cap-"));
+    const evidenceDir = await mkdtemp(join(tmpdir(), "hands-disc-still-"));
+    const result = await Hands.discover(
+      "Look up a member by ID and read the savings balance.",
+      { memberId: "12345" },
+      `${origin}/`,
+      {
+        inject: "unexpected_dialog",
+        llm: scripted([
+          { name: "act", action: "fill", fromParam: "memberId", locators: memberId },
+          { name: "act", action: "click", locators: search },
+          { name: "act", action: "read", into: "balance", locators: savings },
+          { name: "finish" },
+        ]),
+        capabilityDir,
+        evidenceDir,
+        waitForResume: async () => undefined,
+      },
+    );
+    expect(result.kind).toBe("failure");
+    if (result.kind === "failure") {
+      expect(result.step).toBe("search");
+      expect(result.observed).toContain("dialog still present");
+    }
+    expect(await Bun.file(join(capabilityDir, "get_savings_balance.v1.json")).exists()).toBe(false);
+  });
+}, { timeout: 30_000 });
+
+test("discover continues after a stuck dialog is dismissed and writes a capability", async () => {
+  await withMock(async (origin) => {
+    const capabilityDir = await mkdtemp(join(tmpdir(), "hands-cap-"));
+    const evidenceDir = await mkdtemp(join(tmpdir(), "hands-disc-stuck-"));
+    const result = await Hands.discover(
+      "Look up a member by ID and read the savings balance.",
+      { memberId: "12345" },
+      `${origin}/`,
+      {
+        inject: "unexpected_dialog",
+        llm: scripted([
+          { name: "act", action: "fill", fromParam: "memberId", locators: memberId },
+          { name: "act", action: "click", locators: search },
+          { name: "act", action: "read", into: "balance", locators: savings },
+          { name: "finish" },
+        ]),
+        capabilityDir,
+        evidenceDir,
+        waitForResume: async (page) => {
+          await page.getByRole("button", { name: "OK" }).click();
+        },
+      },
+    );
+    expect(result.kind).toBe("capability");
+    if (result.kind !== "capability") {
+      return;
+    }
+    const replayed = await Hands.replay(result.capability, { memberId: "12345" });
+    expect(replayed.kind).toBe("success");
+    const actions = (await Bun.file(join(evidenceDir, "human_actions.json")).json()) as Array<{
+      type: string;
+      name?: string;
+    }>;
+    expect(actions.some((action) => action.type === "click" && action.name === "OK")).toBe(true);
+  });
+}, { timeout: 60_000 });
 
 test("discover stops after three identical snapshots", async () => {
   await withMock(async (origin) => {

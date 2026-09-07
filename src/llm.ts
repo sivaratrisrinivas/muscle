@@ -9,7 +9,7 @@ Each turn you get a fresh accessibility snapshot. Call exactly one tool: act, fi
 
 act actions are click, fill, read, and navigate. Give a locator chain of length two: role and name, then visible text.
 fill uses fromParam (the param name), never a live member ID.
-read uses into "balance".
+read uses into "balance". For read, the visible-text locator is the label (Savings), never a dollar amount.
 Do not click Open sub-account. Call escalate instead.
 finish when a money-shaped amount is visible next to Savings.
 escalate if you are stuck.`;

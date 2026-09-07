@@ -59,7 +59,7 @@ export type ReplayParams = Record<string, string>;
 export type ReplayOptions = {
   inject?: string;
   evidenceDir?: string;
-  waitForResume?: () => Promise<void>;
+  waitForResume?: (page: import("playwright").Page) => Promise<void>;
 };
 
 export type ActCall = {

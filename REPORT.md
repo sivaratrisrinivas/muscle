@@ -32,9 +32,11 @@ Overlays are a story in this report. They are not in the code.
 
 Stuck and risky share one pause. The Playwright window stays up. We write intervention.json with the goal, step, reason, and a screenshot, then wait for Enter.
 
-Owner flips go to owners.json and the log. Human clicks do not become steps.
+Clicks, fills, and the Enter resume during the pause go to human_actions.json. Owner flips go to owners.json and the log. Human clicks do not become steps.
 
-Stuck on this mock is the unexpected dialog. Risky is a step aimed at Open sub-account. We never click that button.
+After Enter, if the dialog is gone we continue the blocked step. If it is still there, that step fails.
+
+Stuck on this mock is the unexpected dialog. Risky is a step aimed at Open sub-account. We never click that button. Discover keeps going after a stuck pause so the model can finish the goal. A model escalate tool still stops.
 
 # Safety
 

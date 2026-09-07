@@ -83,8 +83,8 @@ bun run replay --capability capabilities/get_savings_balance.v1.json --param mem
 bun run replay --capability capabilities/get_savings_balance.v1.json --param memberId=12345 --inject unexpected_dialog
 ```
 
-`member_not_found` is a business outcome. `session_timeout` is a recoverable condition, dismissed inside the step. `unexpected_dialog` is stuck. Stuck writes `intervention.json` and waits for Enter on the same page. A step aimed at Open sub-account is risky and pauses the same way. Human clicks do not become capability steps.
+`member_not_found` is a business outcome. `session_timeout` is a recoverable condition, dismissed inside the step. `unexpected_dialog` is stuck. Stuck writes `intervention.json` and `human_actions.json`, then waits for Enter on the same page. Dismiss the dialog, then press Enter. Replay continues that step. If the dialog is still there, the blocked step fails. A step aimed at Open sub-account is risky and pauses the same way. Human clicks do not become capability steps.
 
 `HEADED=1` shows the window.
 
-I left the runs in `evidence/`. The timeout folder still has the interstitial. The unexpected dialog has the intervention. `REPORT.md` is the write-up. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1
+I left the runs in `evidence/`. The timeout folder still has the interstitial. The unexpected dialog has the intervention, the human OK click, and a success result. `REPORT.md` is the write-up. Spec is https://github.com/sivaratrisrinivas/muscle/issues/1

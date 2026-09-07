@@ -107,7 +107,7 @@ test("replay with member-not-found injected returns business_outcome member_not_
   });
 }, { timeout: 30_000 });
 
-test("an unexpected dialog writes an intervention and resumes after Enter", async () => {
+test("an unexpected dialog records the human OK click and continues to success", async () => {
   await withMock(async () => {
     const evidenceDir = await mkdtemp(join(tmpdir(), "hands-esc-"));
     const capability = await loadCapability();
@@ -115,7 +115,7 @@ test("an unexpected dialog writes an intervention and resumes after Enter", asyn
     const result = await Hands.replay(capability, { memberId: "12345" }, {
       inject: "unexpected_dialog",
       evidenceDir,
-      waitForResume: async () => {
+      waitForResume: async (page) => {
         const intervention = (await Bun.file(join(evidenceDir, "intervention.json")).json()) as {
           goal: string;
           step: string;
@@ -123,16 +123,48 @@ test("an unexpected dialog writes an intervention and resumes after Enter", asyn
           screenshot: string;
         };
         expect(intervention.goal).toBe(capability.description);
-        expect(intervention.step.length).toBeGreaterThan(0);
+        expect(intervention.step).toBe("search");
         expect(intervention.reason).toContain("stuck");
         expect(await Bun.file(join(evidenceDir, intervention.screenshot)).exists()).toBe(true);
         sawIntervention = true;
+        await page.getByRole("button", { name: "OK" }).click();
       },
     });
     expect(sawIntervention).toBe(true);
     const owners = (await Bun.file(join(evidenceDir, "owners.json")).json()) as string[];
     expect(owners).toEqual(["automation", "human", "automation"]);
-    expect(result.kind === "success" || result.kind === "failure").toBe(true);
+    expect(result.kind).toBe("success");
+    if (result.kind === "success") {
+      expect(result.outputs.balance).toBe("$2,450.00");
+    }
+    const actions = (await Bun.file(join(evidenceDir, "human_actions.json")).json()) as Array<{
+      type: string;
+      name?: string;
+    }>;
+    expect(actions.some((action) => action.type === "click" && action.name === "OK")).toBe(true);
+    expect(actions.some((action) => action.type === "resume")).toBe(true);
+  });
+}, { timeout: 30_000 });
+
+test("an unexpected dialog still present after Enter fails the blocked step", async () => {
+  await withMock(async () => {
+    const evidenceDir = await mkdtemp(join(tmpdir(), "hands-esc-still-"));
+    const capability = await loadCapability();
+    const result = await Hands.replay(capability, { memberId: "12345" }, {
+      inject: "unexpected_dialog",
+      evidenceDir,
+      waitForResume: async () => {
+        expect(await Bun.file(join(evidenceDir, "intervention.json")).exists()).toBe(true);
+      },
+    });
+    expect(result.kind).toBe("failure");
+    if (result.kind === "failure") {
+      expect(result.step).toBe("search");
+      expect(result.expected).toContain("dismissed");
+      expect(result.observed).toContain("dialog still present");
+    }
+    const actions = (await Bun.file(join(evidenceDir, "human_actions.json")).json()) as Array<{ type: string }>;
+    expect(actions.some((action) => action.type === "resume")).toBe(true);
   });
 }, { timeout: 30_000 });
 

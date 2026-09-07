@@ -5,7 +5,7 @@ import { chromium, type Page } from "playwright";
 import { actionAllowed, loadAllowlist, originAllowed, resolveActUrl } from "./allowlist.ts";
 import { escalate, setOwner, stepAimsAtRisky, unexpectedDialogPresent } from "./escalate.ts";
 import { envLlm } from "./llm.ts";
-import { actTargetUrl, dismissTimeoutIfPresent, locate, moneyBeside, readMoneyNextTo } from "./surface.ts";
+import { actTargetUrl, dismissTimeoutIfPresent, extractMoney, locate, moneyBeside, readMoneyNextTo } from "./surface.ts";
 import type {
   ActCall,
   Allowlist,
@@ -24,7 +24,7 @@ import type {
 const STEP_CAP = 25;
 const TIME_CAP_MS = 3 * 60 * 1000;
 
-type Handoff = { stuck: boolean; escalated: boolean };
+type Handoff = { stuck: boolean; risky: boolean };
 
 type TranscriptTurn = {
   snapshot: string;
@@ -44,7 +44,7 @@ export const Hands = {
     const evidenceDir = options.evidenceDir ?? process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
     const capabilityDir = options.capabilityDir ?? join(process.cwd(), "capabilities");
     const owners: string[] = [];
-    const handoff: Handoff = { stuck: false, escalated: false };
+    const handoff: Handoff = { stuck: false, risky: false };
     const llm = options.llm ?? envLlm();
     await mkdir(evidenceDir, { recursive: true });
     await mkdir(capabilityDir, { recursive: true });
@@ -75,9 +75,6 @@ export const Hands = {
       const open: Step = { id: "open_lookup", action: "navigate", url: targetUrl.pathname || "/" };
       const outcomes = ["member_not_found"];
       const opened = await runStep(page, open, params, {}, allowlist, baseOrigin, goal, outcomes, evidenceDir, options.waitForResume, owners, handoff);
-      if (handoff.escalated) {
-        return { kind: "stopped", reason: "escalate" };
-      }
       if (opened?.kind === "failure") {
         await snapshotPage(page, evidenceDir, "failure.png");
         return opened;
@@ -134,12 +131,13 @@ export const Hands = {
             turns.push({ snapshot, tool: "act", args: tool, result: compiled.error });
           } else {
             const finished = await runStep(page, compiled, params, outputs, allowlist, baseOrigin, goal, outcomes, evidenceDir, options.waitForResume, owners, handoff);
-            if (handoff.escalated) {
-              turns.push({ snapshot, tool: "act", args: tool, result: "escalated" });
-              return { kind: "stopped", reason: "escalate" };
-            }
-            if (finished?.kind === "failure") {
+            if (handoff.risky) {
+              turns.push({ snapshot, tool: "act", args: tool, result: "risky" });
+              handoff.risky = false;
+            } else if (finished?.kind === "failure") {
               turns.push({ snapshot, tool: "act", args: tool, result: `${finished.expected} / ${finished.observed}` });
+              await snapshotPage(page, evidenceDir, "failure.png");
+              return finished;
             } else if (finished?.kind === "business_outcome") {
               turns.push({ snapshot, tool: "act", args: tool, result: finished.code });
             } else {
@@ -166,7 +164,7 @@ export const Hands = {
     const allowlist = await loadAllowlist();
     const evidenceDir = options.evidenceDir ?? process.env.EVIDENCE_DIR ?? join(tmpdir(), "hands-evidence", String(Date.now()));
     const owners: string[] = [];
-    const handoff: Handoff = { stuck: false, escalated: false };
+    const handoff: Handoff = { stuck: false, risky: false };
     await mkdir(evidenceDir, { recursive: true });
     await setOwner(owners, evidenceDir, "automation");
     const browser = await chromium.launch({
@@ -276,7 +274,7 @@ async function runStep(
   }
 
   if (stepAimsAtRisky(step)) {
-    handoff.escalated = true;
+    handoff.risky = true;
     await escalate(page, evidenceDir, {
       goal,
       step: step.id,
@@ -344,13 +342,16 @@ async function handleStuck(
     return undefined;
   }
   handoff.stuck = true;
-  handoff.escalated = true;
   await escalate(page, evidenceDir, {
     goal,
     step: step.id,
     reason: "stuck: unexpected dialog",
     screenshot: "intervention.png",
   }, owners, waitForResume);
+  await page.waitForLoadState("domcontentloaded");
+  if (await unexpectedDialogPresent(page)) {
+    return fail(step.id, "the unexpected dialog to be dismissed", "dialog still present");
+  }
   return undefined;
 }
 
@@ -424,7 +425,16 @@ function compileAct(call: ActCall, params: ReplayParams, index: number): Step | 
     return { id: clickId(locators, index), action: "click", locators };
   }
   const into = call.into ?? "balance";
-  return { id: `read_${into}`, action: "read", into, locators };
+  return { id: `read_${into}`, action: "read", into, locators: labelNotAmount(locators) };
+}
+
+function labelNotAmount(chain: LocatorChain): LocatorChain {
+  const role = chain[0];
+  const text = chain[1];
+  if (!extractMoney(text.text)) {
+    return chain;
+  }
+  return [role, { by: "visible_text", text: role.name }];
 }
 
 function resolveChain(call: ActCall): LocatorChain | undefined {
