@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+Issues and specs live on GitHub at `sivaratrisrinivas/muscle`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
