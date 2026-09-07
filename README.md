@@ -54,7 +54,9 @@ bunx playwright install chromium
 bun test
 ```
 
-Discovery needs `LLM_API_KEY` in `.env` at the repo root. Git ignores that file. `LLM_BASE_URL` and `MODEL` default to Cerebras, `https://api.cerebras.ai/v1` and `gpt-oss-120b`.
+`bun test` is the no-live-LLM path. It starts its own mock and uses a scripted model, so you do not need Cerebras or a key.
+
+Discovery needs `LLM_API_KEY`. Copy `.env.example` to `.env` at the repo root. Git ignores `.env`. `LLM_BASE_URL` and `MODEL` default to Cerebras, `https://api.cerebras.ai/v1` and `gpt-oss-120b`.
 
 ## Mock
 
